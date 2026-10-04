@@ -43,6 +43,12 @@ partial class Build
                     RootDirectory,
                     environment);
 
+            // mono/skia m153 comments these out in DEPS despite the GN defaults.
+            Run(python,
+                $"\"{RootDirectory / "build" / "prepare-skia.py"}\" \"{SkiaSourceDirectory}\"",
+                RootDirectory,
+                environment);
+
             RunWithRetries(python, "tools/git-sync-deps", SkiaSourceDirectory, environment, 5);
             RunWithRetries(python, "bin/fetch-ninja", SkiaSourceDirectory, environment, 5);
 
