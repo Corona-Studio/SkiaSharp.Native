@@ -33,6 +33,11 @@ Windows x64 GN host tool, while compiling ARM64 libraries. Windows uses the
 static MSVC runtime (`/MT`). macOS targets version 12.0 or later. Linux uses
 Ubuntu 24.04; the consuming executable has the same libc compatibility floor.
 
+To check the Windows ARM64 GN bootstrap independently, run
+`python build/tests/verify_skia_gn_bootstrap.py <unpatched-skia-source>`
+on Windows. This verifies the child-process download and GN execution with
+simulated ARM64 detection, using cold and warm caches.
+
 ## Consume
 
 Pin a release tag and its archive hash. Verify the downloaded ZIP before
