@@ -1,0 +1,6 @@
+.native/
+artifacts/
+.nuke/temp/
+**/bin/
+**/obj/
+__pycache__/

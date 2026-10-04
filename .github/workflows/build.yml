@@ -1,0 +1,111 @@
+name: Build static native libraries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.rid }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64, os: win, arch: x64, runner: windows-2025 }
+          - { rid: win-arm64, os: win, arch: arm64, runner: windows-11-arm }
+          - { rid: osx-x64, os: osx, arch: x64, runner: macos-15-intel }
+          - { rid: osx-arm64, os: osx, arch: arm64, runner: macos-15 }
+          - { rid: linux-x64, os: linux, arch: x64, runner: ubuntu-24.04 }
+          - { rid: linux-arm64, os: linux, arch: arm64, runner: ubuntu-24.04-arm }
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      PYTHONUTF8: 1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          architecture: ${{ matrix.arch }}
+
+      # Skia's generated Ninja toolchain invokes `python3`. setup-python exposes
+      # python.exe on Windows, so provide the equivalent name beside it.
+      - name: Provide python3 command on Windows
+        if: matrix.os == 'win'
+        shell: pwsh
+        run: |
+          $python = (Get-Command python -ErrorAction Stop).Source
+          $python3 = Join-Path (Split-Path $python) 'python3.exe'
+          if (-not (Test-Path $python3)) {
+            Copy-Item -LiteralPath $python -Destination $python3
+          }
+          & $python3 --version
+
+      - name: Install Linux NativeAOT toolchain
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes build-essential clang lld python3 zlib1g-dev libfontconfig1-dev
+
+      - name: Compile SkiaSharp and HarfBuzzSharp static archives
+        run: >-
+          dotnet run --project build/_build.csproj --
+          BuildNativeLibraries --target-os ${{ matrix.os }} --target-arch ${{ matrix.arch }}
+
+      - name: Package complete native library set
+        run: python build/package.py ${{ matrix.rid }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: artifacts/release/*
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: artifacts/release
+          merge-multiple: true
+      - name: Verify all six packages and publish immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          tag=$(python3 -c 'import json; print(json.load(open("native-lock.json"))["tag"])')
+          cd artifacts/release
+          test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 6
+          cat *.sha256 > SHA256SUMS
+          sha256sum --check SHA256SUMS
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "SkiaSharp 4.153.1 static libraries (revision 1)" \
+            --notes "Six native targets. Includes SkiaSharp, HarfBuzzSharp, all GN dependency archives, source revision, manifests and license notices. See README for linker requirements." \
+            ./*.zip SHA256SUMS
+      - name: Remove temporary workflow artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[].id' | while read -r id; do
+            gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+          done
