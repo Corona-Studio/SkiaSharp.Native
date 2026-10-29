@@ -1,6 +1,6 @@
 # SkiaSharp.Native
 
-MIT-licensed build scripts for reusable SkiaSharp 4.153.1 and HarfBuzzSharp
+MIT-licensed build scripts for reusable SkiaSharp 4.154.0 and HarfBuzzSharp
 static archives. Native compilation runs in this public repository on standard
 GitHub-hosted runners; consumers download release assets and perform their own
 final NativeAOT link.

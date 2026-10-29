@@ -99,7 +99,7 @@ jobs:
           cat *.sha256 > SHA256SUMS
           sha256sum --check SHA256SUMS
           gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "SkiaSharp 4.153.1 static libraries (revision 1)" \
+            --title "SkiaSharp 4.154.0 static libraries (revision 1)" \
             --notes "Six native targets. Includes SkiaSharp, HarfBuzzSharp, all GN dependency archives, source revision, manifests and license notices. See README for linker requirements." \
             ./*.zip SHA256SUMS
       - name: Remove temporary workflow artifacts
