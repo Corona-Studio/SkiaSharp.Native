@@ -13,9 +13,9 @@ using Serilog;
 // ReSharper disable InconsistentNaming
 partial class Build
 {
-    // SkiaSharp 4.154.0's exact mono/skia submodule revision. Keeping this in
+    // SkiaSharp 4.155.0's exact mono/skia submodule revision. Keeping this in
     // lockstep with the managed package is required for a stable C ABI.
-    const string SkiaCommit = "993e88f35c9d107669824cf5575c002964e4b087";
+    const string SkiaCommit = "c2d78902a56e24827a7273a4ed3461ce18780680";
 
     static AbsolutePath NativeCacheDirectory => RootDirectory / ".native";
     static AbsolutePath NativeDownloadsDirectory => NativeCacheDirectory / "downloads";
@@ -43,7 +43,7 @@ partial class Build
                     RootDirectory,
                     environment);
 
-            // mono/skia m154 comments these out in DEPS despite the GN defaults.
+            // mono/skia m155 comments these out in DEPS despite the GN defaults.
             Run(python,
                 $"\"{RootDirectory / "build" / "prepare-skia.py"}\" \"{SkiaSourceDirectory}\"",
                 RootDirectory,
@@ -170,7 +170,7 @@ partial class Build
             // final /OPT:REF /OPT:ICF link can then discard unused Skia code
             // and fold duplicate data instead of retaining whole object files.
             "win" => "[\"/MT\", \"/EHsc\", \"/guard:cf\", \"/Gy\", \"/Gw\", \"-D_HAS_AUTO_PTR_ETC=1\", \"-DSKIA_C_DLL\", \"-DSK_AVOID_SLOW_RASTER_PIPELINE_BLURS\", \"-DSK_ENABLE_LEGACY_SHADERCONTEXT\"]",
-            // Keep Expat's entropy selection aligned with SkiaSharp's m154
+            // Keep Expat's entropy selection aligned with SkiaSharp's m155
             // Linux build. Ubuntu 24.04 provides the syscall on both supported
             // architectures; XML_DEV_URANDOM enables Expat's entropy code.
             "linux" => "[\"-fPIC\", \"-ffunction-sections\", \"-fdata-sections\", \"-DSKIA_C_DLL\", \"-DHAVE_SYSCALL_GETRANDOM\", \"-DXML_DEV_URANDOM\", \"-DSK_AVOID_SLOW_RASTER_PIPELINE_BLURS\", \"-DSK_ENABLE_LEGACY_SHADERCONTEXT\"]",
