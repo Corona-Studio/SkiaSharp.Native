@@ -1,6 +1,6 @@
 {
   "repository": "Corona-Studio/SkiaSharp.Native",
-  "tag": "skiasharp-4.154.0-r1",
-  "skiaSharpVersion": "4.154.0",
-  "skiaCommit": "993e88f35c9d107669824cf5575c002964e4b087"
+  "tag": "skiasharp-4.155.0-r1",
+  "skiaSharpVersion": "4.155.0",
+  "skiaCommit": "c2d78902a56e24827a7273a4ed3461ce18780680"
 }
